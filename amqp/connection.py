@@ -106,7 +106,9 @@ class Connection(AbstractChannel):
                  virtual_host='/', locale='en_US', client_properties=None,
                  ssl=False, connect_timeout=None, channel_max=None,
                  frame_max=None, heartbeat=0, on_blocked=None,
-                 on_unblocked=None, confirm_publish=False, **kwargs):
+                 on_unblocked=None, confirm_publish=False,
+                 keepalive_idle=None, keepalive_interval=None,
+                 keepalive_count=None, **kwargs):
         """Create a connection to the specified host, which should be
         a 'host[:port]', such as 'localhost', or '1.2.3.4:5672'
         (defaults to 'localhost', if a port is not specified then
@@ -162,7 +164,10 @@ class Connection(AbstractChannel):
         # Let the transport.py module setup the actual
         # socket connection to the broker.
         #
-        self.transport = self.Transport(host, connect_timeout, ssl)
+        self.transport = self.Transport(host, connect_timeout, ssl,
+                                        keepalive_idle=keepalive_idle,
+                                        keepalive_interval=keepalive_interval,
+                                        keepalive_count=keepalive_count)
 
         self.method_reader = MethodReader(self.transport)
         self.method_writer = MethodWriter(self.transport, self.frame_max)
@@ -182,8 +187,14 @@ class Connection(AbstractChannel):
 
         return self._x_open(virtual_host)
 
-    def Transport(self, host, connect_timeout, ssl=False):
-        return create_transport(host, connect_timeout, ssl)
+    def Transport(self, host, connect_timeout, ssl=False,
+                  keepalive_idle=None,
+                  keepalive_interval=None,
+                  keepalive_count=None):
+        return create_transport(host, connect_timeout, ssl,
+                                keepalive_idle=keepalive_idle,
+                                keepalive_interval=keepalive_interval,
+                                keepalive_count=keepalive_count)
 
     @property
     def connected(self):
